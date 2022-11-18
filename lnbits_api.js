@@ -1,5 +1,6 @@
 require('dotenv').config()
 const axios = require('axios')
+const QRCode = require("qrcode");
 
 const admin_key = process.env.ADMIN_KEY || ""
 const invoice_key = process.env.INVOICE_KEY || ""
@@ -51,7 +52,6 @@ async function createInvoice(amount) {
              "memo": '', 
              "webhook": '', 
              "unit": ""}
-//        console.log(payload)
 
         let response = await axios(
             { 
@@ -64,14 +64,14 @@ async function createInvoice(amount) {
         if (response.status == 201) {  // status created
             console.log(response.data) 
             // response.data contains payment_hash, payment_request, checking_id, lnurl_response
-            // return payment request bolt11
+            // return payment_request values as it is the bolt11
             return response.data.payment_request
         }
     } catch (err) { 
        // console.log(err)
         console.log(err.response.status)
         console.log(err.response.data)
-        msg = "Error fetching data. Try again later."
+        msg = "Error"
         return msg
     }
 }
@@ -111,11 +111,30 @@ async function decodeInvoice(invoice) {
 
 
 async function checkInvoice(payment_hash) { 
+    //todo
 }
 
+// NOTE: this enables anyone who visits the bot to pay w/your account
+// so this is for demo purposes only. 
 async function payInvoice(invoice) { 
+    //todo.
 }
 
+const generateQR = async text => {
+// function generates a "data:xxx" string which can be embedded in a svg
+    try {
+        const data = await QRCode.toDataURL(text)
+       // console.log(data)
+        return data
+    } catch (err) {
+        console.error(err)
+        return "error"
+    }
+  }
+
+const scanQR = async text => { 
+    // todo
+}
 
 module.exports = { 
     getInfo, 
@@ -123,5 +142,7 @@ module.exports = {
     createInvoice, 
     decodeInvoice,
     payInvoice, 
-    checkInvoice
+    checkInvoice, 
+    generateQR, 
+    scanQR
 }

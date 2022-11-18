@@ -7,7 +7,7 @@ const stage = new Stage()
 const axios = require('axios')
 require('dotenv').config()
 
-const { getInfo, getWallet, createInvoice, decodeInvoice } = require('./lnbits_api')
+const { getInfo, getWallet, createInvoice, decodeInvoice, generateQR } = require('./lnbits_api')
 
 const token = process.env.BOT_TOKEN || ""
 if (!token) {
@@ -28,11 +28,11 @@ const decode = new Scene('decode')
 stage.register(decode)
 
 // create an invoice (include make QR code)
-const create_invoice = new Scene('create_invoice')
+const create_invoice = new Scene('createinvoice')
 stage.register(create_invoice)
 
 // pay an invoice (include scanning QR image)
-const pay_invoice = new Scene('pay_invoice')
+const pay_invoice = new Scene('payinvoice')
 stage.register(pay_invoice)
 
 
@@ -42,12 +42,12 @@ bot.use(session())
 bot.use(stage.middleware())
 
 bot.start((ctx) => {
-    starter(ctx)
     ctx.reply('Welcome')
-    ctx.telegram.getMyCommands().then(res => {
-        console.log(res)
-        return ctx.reply(res)
-    })    
+    starter(ctx)
+    // ctx.telegram.getMyCommands().then(res => {
+    //     console.log(res)
+    //     return ctx.reply(res)
+    // })    
 })
 
 // test method
@@ -57,20 +57,46 @@ bot.hears('test', async ctx => {
   return ctx.reply(res)
 })
 
-bot.hears('Balance', async ctx => { 
+bot.hears('Get Balance', async ctx => { 
   const msg = await getWallet()
   return ctx.reply(msg)
 })
 
+///////////////
+
 bot.hears('⚡️ Invoice', async ctx => {
-  const bolt11 = await createInvoice("1000")
-  console.log(bolt11)
-  // todo create qr code
-  return ctx.reply(bolt11)
+  ctx.scene.enter('createinvoice')
 })
 
+create_invoice.enter((ctx) => { 
+  ctx.reply("How many sats for your invoice? ", 
+  { reply_markup: { keyboard: [['⬅️ Back']], resize_keyboard: true }})
+})
 
-bot.hears('/decode', async ctx => { 
+create_invoice.leave((ctx) => starter(ctx))
+// this 'back' must preceed 'text' method or it will not execute
+create_invoice.hears('⬅️ Back', (ctx) => {
+  ctx.scene.leave('createinvoice')
+  starter(ctx)
+})
+
+create_invoice.on('text', async(ctx) => { 
+  if (ctx.message.text.length > 7)  {
+    return ctx.reply('Too big of an invoice, try a smaller amount?')
+  }
+  ctx.replyWithChatAction('typing')
+  const bolt11 = await createInvoice("1000")
+  if (bolt11 != "Error") {
+    await ctx.replyWithPhoto(`http://api.qrserver.com/v1/create-qr-code/?data=${encodeURI(bolt11)}&size=250x250`,
+    { caption: bolt11 })  
+  } else { 
+    ctx.reply("Error fetching data. Try again?")
+  }
+})
+
+////////////
+
+bot.hears('Decode Invoice', async ctx => { 
   ctx.scene.enter('decode')
 })
 
@@ -100,12 +126,13 @@ decode.on('text', async(ctx) => {
 })
 
 
-
+///////// starter /////////
 function starter (ctx) {
     ctx.reply(
       'Hi! What do you want to do?', 
-      { reply_markup: { keyboard: [['🔍 Scan QR Code', '🖊 Generate QR Code'], 
-      ['Balance', '⚡️ Invoice']], resize_keyboard: true } }
+      { reply_markup: { keyboard: [['Get Balance'], 
+      ['Decode Invoice', '⚡️ Invoice'], ['🔍 Scan QR Code', '🖊 Generate QR Code']],
+       resize_keyboard: true } }
     )
   }
 
@@ -115,7 +142,8 @@ bot.hears('🖊 Generate QR Code', (ctx) => {
 
 bot.on('message', async (ctx) => {
     ctx.scene.leave('decode')
-    ctx.scene.leave('generate') 
+    ctx.scene.leave('generate')
+    ctx.scene.leave('createinvoice')
     starter(ctx)
   })
 
