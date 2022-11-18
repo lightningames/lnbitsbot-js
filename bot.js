@@ -7,7 +7,7 @@ const stage = new Stage()
 const axios = require('axios')
 require('dotenv').config()
 
-const { getInfo, getWallet, createInvoice, decodeInvoice, generateQR } = require('./lnbits_api')
+const { getWallet, createInvoice, decodeInvoice, generateQR } = require('./lnbits_api')
 
 const token = process.env.BOT_TOKEN || ""
 if (!token) {
@@ -44,18 +44,14 @@ bot.use(stage.middleware())
 bot.start((ctx) => {
     ctx.reply('Welcome')
     starter(ctx)
-    // ctx.telegram.getMyCommands().then(res => {
-    //     console.log(res)
-    //     return ctx.reply(res)
-    // })    
 })
 
 // test method
-bot.hears('test', async ctx => {
-  const res = await getInfo('123')
-  console.log(res)
-  return ctx.reply(res)
-})
+// bot.hears('test', async ctx => {
+//   const res = await getInfo('123')
+//   console.log(res)
+//   return ctx.reply(res)
+// })
 
 bot.hears('Get Balance', async ctx => { 
   const msg = await getWallet()
@@ -65,6 +61,10 @@ bot.hears('Get Balance', async ctx => {
 ///////////////
 
 bot.hears('⚡️ Invoice', async ctx => {
+  ctx.scene.enter('createinvoice')
+})
+
+bot.hears('/invoice', async ctx => {
   ctx.scene.enter('createinvoice')
 })
 
