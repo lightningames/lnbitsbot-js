@@ -7,7 +7,7 @@ const stage = new Stage()
 const axios = require('axios')
 require('dotenv').config()
 
-const { getWallet, createInvoice, decodeInvoice, generateQR } = require('./lnbits_api')
+const { getWallet, createInvoice, decodeInvoice, generateQR, scanQRcode } = require('./lnbits_api')
 
 const token = process.env.BOT_TOKEN || ""
 if (!token) {
@@ -18,6 +18,10 @@ console.log("bot token:", token)
 
 
 const bot = new Telegraf(token)
+
+// scan QR
+const scanQR = new Scene('scanQR')
+stage.register(scanQR)
 
 // generate QR Code
 const generate = new Scene('generate')
@@ -46,21 +50,24 @@ bot.start((ctx) => {
     starter(ctx)
 })
 
-// test method
-// bot.hears('test', async ctx => {
-//   const res = await getInfo('123')
-//   console.log(res)
-//   return ctx.reply(res)
-// })
-
 bot.hears('Get Balance', async ctx => { 
   const msg = await getWallet()
   return ctx.reply(msg)
 })
 
-///////////////
+bot.hears('👓 Decode Invoice', async ctx => { 
+  ctx.scene.enter('decode')
+})
 
-bot.hears('⚡️ Invoice', async ctx => {
+bot.hears('🖊 Generate QR Code', (ctx) => {
+  ctx.scene.enter('generate')
+})
+
+bot.hears('🔍 Scan QR Code', (ctx) => {
+  ctx.scene.enter('scanQR')
+})
+
+bot.hears('⚡️ Create Invoice', async ctx => {
   ctx.scene.enter('createinvoice')
 })
 
@@ -68,6 +75,8 @@ bot.hears('/invoice', async ctx => {
   ctx.scene.enter('createinvoice')
 })
 
+
+///////////////
 create_invoice.enter((ctx) => { 
   ctx.reply("How many sats for your invoice? ", 
   { reply_markup: { keyboard: [['⬅️ Back']], resize_keyboard: true }})
@@ -96,12 +105,9 @@ create_invoice.on('text', async(ctx) => {
 
 ////////////
 
-bot.hears('Decode Invoice', async ctx => { 
-  ctx.scene.enter('decode')
-})
 
 decode.enter((ctx) => { 
-  ctx.reply("Send me a LNURL to decode! ", 
+  ctx.reply("Send me a Invoice to Decode! ", 
   { reply_markup: { keyboard: [['⬅️ Back']], resize_keyboard: true }})
 })
 
@@ -119,33 +125,13 @@ decode.on('text', async(ctx) => {
   }
   ctx.replyWithChatAction('typing')
   let invoice = ctx.message.text
-  // "lnbc10u1p3ht7j7pp5hyu25fceuwvc2u5f82vn29wtv69rykxhf9w5efp3nhjmugl66j5qdq6gpxxjemgw3hxjmn8235hqsn0wscqzpgxqyz5vqsp5g53ts94jyzezms69a934tzmpxgajp85qhp0l7qc4tr80qzunstus9qyyssqe4wrz03d7hcr9u9j7zsnhwy7wuhqaxf3y75m879kyglnw77nt3sq2lj7vrskfmx73xqqjvkn7cd0rvvd5ckeje48ldnq6732znvy3rspfasj77"
   const msg = await decodeInvoice(invoice)
-  //console.log(msg)
   return ctx.reply(msg)
 })
 
 
-///////// starter /////////
-function starter (ctx) {
-    ctx.reply(
-      'Hi! What do you want to do?', 
-      { reply_markup: { keyboard: [['Get Balance'], 
-      ['Decode Invoice', '⚡️ Invoice'], ['🔍 Scan QR Code', '🖊 Generate QR Code']],
-       resize_keyboard: true } }
-    )
-  }
 
-bot.hears('🖊 Generate QR Code', (ctx) => {
-    ctx.scene.enter('generate')
-})
-
-bot.on('message', async (ctx) => {
-    ctx.scene.leave('decode')
-    ctx.scene.leave('generate')
-    ctx.scene.leave('createinvoice')
-    starter(ctx)
-  })
+///// Generate QR Code /////
 
 generate.enter((ctx) => {
   ctx.reply(
@@ -181,6 +167,64 @@ generate.on('text', async (ctx) => {
         sendError(`Generating error by message ${ctx.message.text}: \n\n ${err.toString()}`, ctx)
       })  
   })
+
+///////// Scan QR Code //////////
+
+scanQR.enter((ctx) => {
+  ctx.reply(
+    'I`m ready. Send a picture!', 
+    { reply_markup: { keyboard: [['⬅️ Back']], resize_keyboard: true } }
+  )
+})
+
+scanQR.on('photo', async (ctx) => {
+  ctx.replyWithChatAction('typing')
+
+  const imageData = await bot.telegram.getFile(ctx.message.photo[ctx.message.photo.length - 1].file_id)
+
+  axios({
+    url: `https://api.qrserver.com/v1/read-qr-code/?fileurl=https://api.telegram.org/file/bot${token}/${imageData.file_path}`,
+    method: 'GET'
+  })
+    .then(async (response) => {
+      if (response.data[0].symbol[0].error === null) {
+        await ctx.reply('Scanned data:')
+        await ctx.reply(response.data[0].symbol[0].data)
+      } else {
+        await ctx.reply('No data found on this picture.')
+      }
+      ctx.reply('You can send me other pictures or tap "⬅️ Back"')
+    })
+    .catch((err) => {
+      ctx.reply('No data found on this picture.')
+      // sendError(err, ctx)
+    })
+})
+
+scanQR.hears('⬅️ Back', (ctx) => {
+  starter(ctx)
+  ctx.scene.leave('scanQR')
+})
+
+
+///////// starter /////////
+function starter (ctx) {
+  ctx.reply(
+    'Hi! What do you want to do?', 
+    { reply_markup: { keyboard: [['Get Balance'], 
+    ['📨 Pay Invoice', '⚡️ Create Invoice'],
+    ['👓 Decode Invoice', '✅ Check an Invoice'],
+    ['🔍 Scan QR Code', '🖊 Generate QR Code']],
+     resize_keyboard: true } }
+  )
+}
+
+bot.on('message', async (ctx) => {
+  ctx.scene.leave('decode')
+  ctx.scene.leave('generate')
+  ctx.scene.leave('createinvoice')
+  starter(ctx)
+})
 
 
 function sendError (err, ctx) {

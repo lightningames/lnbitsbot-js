@@ -1,14 +1,11 @@
 require('dotenv').config()
 const axios = require('axios')
 const QRCode = require("qrcode");
+const QRscanner = require('qr-scanner')
 
 const admin_key = process.env.ADMIN_KEY || ""
 const invoice_key = process.env.INVOICE_KEY || ""
 const url = process.env.LNBITS_URL || ""
-
-// console.log("admin key: ", admin_key)
-// console.log("invoice key: ", invoice_key)
-// console.log("lnbits url: ", url)
 
 let invoice_headers = {"X-Api-Key": invoice_key }
 let admin_headers =  {"X-Api-Key": admin_key }
@@ -16,10 +13,6 @@ let json_content = {"Content-type" : "application/json"}
 const base_url = url + "/api/v1/"
 console.log("BASE URL", base_url)
 
-// async function getInfo(info) { 
-//     console.log("input value: ", info)        
-//     return "THIS IS THE INFO test"
-// }
 
 async function getWallet() { 
     let msg = ''
@@ -123,7 +116,9 @@ async function payInvoice(invoice) {
 const generateQR = async text => {
 // function generates a "data:xxx" string which can be embedded in a svg
     try {
-        const data = await QRCode.toDataURL(text)
+        const data = await QRCode.toDataURL(text, {
+            errorCorrectionLevel: 'H'
+        })
        // console.log(data)
         return data
     } catch (err) {
@@ -132,17 +127,20 @@ const generateQR = async text => {
     }
   }
 
-const scanQR = async text => { 
-    // todo
+const scanQRcode = async image => { 
+    // todo, need to test this
+    QRscanner.scanImage(image)
+    .then(result => console.log(result))
+    .catch(error => console.log(error || 'No QR code found.'));
 }
 
+
 module.exports = { 
-//    getInfo, 
     getWallet,
     createInvoice, 
     decodeInvoice,
     payInvoice, 
     checkInvoice, 
     generateQR, 
-    scanQR
+    scanQRcode
 }
