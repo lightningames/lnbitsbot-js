@@ -1,7 +1,7 @@
 require('dotenv').config()
 const axios = require('axios')
-const QRCode = require("qrcode");
-const QRscanner = require('qr-scanner')
+const sharp = require('sharp');
+const QRcode = require('qrcode')
 
 const admin_key = process.env.ADMIN_KEY || ""
 const invoice_key = process.env.INVOICE_KEY || ""
@@ -114,13 +114,17 @@ async function payInvoice(invoice) {
 }
 
 const generateQR = async text => {
-// function generates a "data:xxx" string which can be embedded in a svg
+    // toDataURL generates a "data:xxx" string only image/png
     try {
-        const data = await QRCode.toDataURL(text, {
+        // use this toDataURL to inject image into SVG for merging
+        // const img = await QRcode.toDataURL(text, {
+        //     errorCorrectionLevel: 'H'
+        // })
+        const path = '/tmp/qr.png'
+        await QRcode.toFile(path, text, { 
             errorCorrectionLevel: 'H'
         })
-       // console.log(data)
-        return data
+        return path
     } catch (err) {
         console.error(err)
         return "error"
@@ -129,9 +133,7 @@ const generateQR = async text => {
 
 const scanQRcode = async image => { 
     // todo, need to test this
-    QRscanner.scanImage(image)
-    .then(result => console.log(result))
-    .catch(error => console.log(error || 'No QR code found.'));
+
 }
 
 

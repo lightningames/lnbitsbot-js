@@ -95,9 +95,16 @@ create_invoice.on('text', async(ctx) => {
   }
   ctx.replyWithChatAction('typing')
   const bolt11 = await createInvoice("1000")
-  if (bolt11 != "Error") {
-    await ctx.replyWithPhoto(`http://api.qrserver.com/v1/create-qr-code/?data=${encodeURI(bolt11)}&size=250x250`,
-    { caption: bolt11 })  
+  if (bolt11 != "error") {
+    const photodata = await generateQR(bolt11)    
+    //const path = `https://api.telegram.org/file/bot${token}/sendPhoto`
+    //    await ctx.replyWithPhoto({ source: '/tmp/qr_img.png'})
+      console.log("photo path: " , photodata)
+      await ctx.replyWithPhoto({ source:  photodata})
+  
+//    await ctx.replyWithPhoto(`http://api.qrserver.com/v1/create-qr-code/?data=${encodeURI(bolt11)}&size=250x250`,
+//    { caption: bolt11 })  
+
   } else { 
     ctx.reply("Error fetching data. Try again?")
   }
@@ -181,24 +188,39 @@ scanQR.on('photo', async (ctx) => {
   ctx.replyWithChatAction('typing')
 
   const imageData = await bot.telegram.getFile(ctx.message.photo[ctx.message.photo.length - 1].file_id)
+  console.log(imageData)
+  const path = `https://api.telegram.org/file/bot${token}/${imageData.file_path}`
+  console.log(path)
+  await scanQRcode(path)
+  
+  // try { 
+  //   const msg = await scanQRcode(imageData)
+  //   await ctx.reply('Scanned data:')
+  //   await ctx.reply(msg)  
+  // } catch (error) { 
+  //   const msg = error || 'No QR code found.'
+  //   console.log(msg)
+  //   await ctx.reply('No data found on this picture.')
+  // }
+  ctx.reply('You can send me other pictures or tap "⬅️ Back"')
 
-  axios({
-    url: `https://api.qrserver.com/v1/read-qr-code/?fileurl=https://api.telegram.org/file/bot${token}/${imageData.file_path}`,
-    method: 'GET'
-  })
-    .then(async (response) => {
-      if (response.data[0].symbol[0].error === null) {
-        await ctx.reply('Scanned data:')
-        await ctx.reply(response.data[0].symbol[0].data)
-      } else {
-        await ctx.reply('No data found on this picture.')
-      }
-      ctx.reply('You can send me other pictures or tap "⬅️ Back"')
-    })
-    .catch((err) => {
-      ctx.reply('No data found on this picture.')
-      // sendError(err, ctx)
-    })
+  // axios({
+  //   url: `https://api.qrserver.com/v1/read-qr-code/?fileurl=https://api.telegram.org/file/bot${token}/${imageData.file_path}`,
+  //   method: 'GET'
+  // })
+  //   .then(async (response) => {
+  //     if (response.data[0].symbol[0].error === null) {
+  //       await ctx.reply('Scanned data:')
+  //       await ctx.reply(response.data[0].symbol[0].data)
+  //     } else {
+  //       await ctx.reply('No data found on this picture.')
+  //     }
+  //     ctx.reply('You can send me other pictures or tap "⬅️ Back"')
+  //   })
+  //   .catch((err) => {
+  //     ctx.reply('No data found on this picture.')
+  //     // sendError(err, ctx)
+  //   })
 })
 
 scanQR.hears('⬅️ Back', (ctx) => {
@@ -213,7 +235,7 @@ function starter (ctx) {
     'Hi! What do you want to do?', 
     { reply_markup: { keyboard: [['Get Balance'], 
     ['📨 Pay Invoice', '⚡️ Create Invoice'],
-    ['👓 Decode Invoice', '✅ Check an Invoice'],
+//    ['👓 Decode Invoice', '✅ Check an Invoice'],
     ['🔍 Scan QR Code', '🖊 Generate QR Code']],
      resize_keyboard: true } }
   )
