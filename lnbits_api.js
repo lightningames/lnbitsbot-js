@@ -1,7 +1,8 @@
 require('dotenv').config()
 const axios = require('axios')
-const sharp = require('sharp');
+//const sharp = require('sharp');
 const QRcode = require('qrcode')
+const { ZXing } = require('@zxing/library');
 
 const admin_key = process.env.ADMIN_KEY || ""
 const invoice_key = process.env.INVOICE_KEY || ""
@@ -120,7 +121,7 @@ const generateQR = async text => {
         // const img = await QRcode.toDataURL(text, {
         //     errorCorrectionLevel: 'H'
         // })
-        const path = '/tmp/qr.png'
+        const path = '/tmp/qr.png' // make this dynamic
         await QRcode.toFile(path, text, { 
             errorCorrectionLevel: 'H'
         })
@@ -133,6 +134,14 @@ const generateQR = async text => {
 
 const scanQRcode = async image => { 
     // todo, need to test this
+
+    const codeReader = new ZXing.BrowserQRCodeReader()
+    // img is path to image uploaded by telegram
+    codeReader.decodeFromImage(image).then((result) => {
+        console.log(result)
+    }).catch((err) => {
+        console.error(err)
+    })
 
 }
 
