@@ -89,19 +89,31 @@ create_invoice.hears('⬅️ Back', (ctx) => {
   starter(ctx)
 })
 
+function isNumeric(val) {
+  return /^-?\d+$/.test(val);
+}
+
+
 create_invoice.on('text', async(ctx) => { 
-  if (ctx.message.text.length > 7)  {
+  let amt = ctx.message.text
+  console.log(amt)
+  if (isNumeric(amt) === false) { 
+    return ctx.reply("Please send a valid amount greater than 10")
+  }
+  if (ctx.message.text.length > 8)  {
     return ctx.reply('Too big of an invoice, try a smaller amount?')
   }
   ctx.replyWithChatAction('typing')
-  const bolt11 = await createInvoice("1000")
-  if (bolt11 != "error") {
-    const photodata = await generateQR(bolt11)    
-      console.log("photo path: " , photodata)
-      await ctx.replyWithPhoto({ source:  photodata})
-  } else { 
-    ctx.reply("Error fetching data. Try again?")
+
+  const bolt11 = await createInvoice(amt)
+  console.log("generated bolt11 :", bolt11)
+  if (bolt11 === "Error") {
+    return ctx.reply("Error fetching data. Try again?")
   }
+  const photodata = await generateQR(bolt11) 
+  console.log("photo path: " , photodata)
+  await ctx.replyWithPhoto({ source:  photodata})
+  await ctx.reply('You can send another amount or tap "⬅️ Back"')  
 })
 
 ////////////
@@ -148,21 +160,16 @@ generate.on('text', async (ctx) => {
       return ctx.reply('Your text is too long. Please send text that contains not more than 900 symbols.')
     }
     ctx.replyWithChatAction('upload_photo')
-  
-    axios.get(`http://api.qrserver.com/v1/create-qr-code/?data=${encodeURI(ctx.message.text)}&size=300x300`)
-      .then(async (response) => {
-        await ctx.replyWithPhoto(`http://api.qrserver.com/v1/create-qr-code/?data=${encodeURI(ctx.message.text)}&size=300x300`,
-        { caption: 'Generated via @OneQRBot' })
-        ctx.reply('You can send me another text or tap "⬅️ Back"')
-      
-      })
-      .catch(async (err) => {
-        console.log(err)
-        await ctx.reply('Data you sent isn`t valid. Please check that and try again.')
-        ctx.reply('You can send me another text or tap "⬅️ Back"')
-  
-        sendError(`Generating error by message ${ctx.message.text}: \n\n ${err.toString()}`, ctx)
-      })  
+    try { 
+      console.log("message from user: ", ctx.message.text)
+      const path = await generateQR(ctx.message.text)
+      console.log(path)
+      await ctx.replyWithPhoto({source: path })
+      await ctx.reply('You can send me more text or tap "⬅️ Back"')  
+    } catch (err) { 
+      console.log(err)
+      ctx.reply("Error trying to generate QRCode.")
+    }
   })
 
 ///////// Scan QR Code //////////
@@ -184,7 +191,7 @@ scanQR.on('photo', async (ctx) => {
     console.log("result: " , result)
     if (result === "error"){ 
       //console.log("error statement")
-      await ctx.reply('No data found on this picture.')
+      await ctx.reply('No QR Code data found on this picture.')
     } else { 
       await ctx.reply('Scanned data:')
       await ctx.reply(result)
@@ -192,7 +199,7 @@ scanQR.on('photo', async (ctx) => {
     }
   } catch (err) { 
     //console.log( "catch: error statement")
-    ctx.reply('No data found on this picture.')
+    ctx.reply('No QR Code data found on this picture.')
     // sendError()
   }
 })

@@ -56,7 +56,7 @@ async function createInvoice(amount) {
         })
         //console.log(response)
         if (response.status == 201) {  // status created
-            console.log(response.data) 
+            //console.log(response.data) 
             // response.data contains payment_hash, payment_request, checking_id, lnurl_response
             // return payment_request values as it is the bolt11
             return response.data.payment_request
@@ -64,7 +64,7 @@ async function createInvoice(amount) {
     } catch (err) { 
        // console.log(err)
         console.log(err.response.status)
-        console.log(err.response.data)
+        //console.log(err.response.data)
         msg = "Error"
         return msg
     }
@@ -116,6 +116,7 @@ async function payInvoice(invoice) {
 
 const generateQR = async text => {
     // toDataURL generates a "data:xxx" string only image/png
+    // TODO: fix this so that its a Multipart Form Data send and not a file saved to /tmp
     try {
         // use this toDataURL to inject image into SVG for merging
         // const img = await QRcode.toDataURL(text, {

@@ -108,3 +108,5 @@ data.js
 
 # ignore .txt files 
 *.txt
+
+archive
