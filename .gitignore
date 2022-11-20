@@ -106,4 +106,5 @@ dist
 # .data.js
 data.js
 
-scratch.txt
+# ignore .txt files 
+*.txt

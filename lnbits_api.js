@@ -1,8 +1,8 @@
 require('dotenv').config()
 const axios = require('axios')
-//const sharp = require('sharp');
 const QRcode = require('qrcode')
-const { ZXing } = require('@zxing/library');
+const Jimp = require("jimp");
+const jsQR = require("jsqr");
 
 const admin_key = process.env.ADMIN_KEY || ""
 const invoice_key = process.env.INVOICE_KEY || ""
@@ -132,18 +132,22 @@ const generateQR = async text => {
     }
   }
 
-const scanQRcode = async image => { 
-    // todo, need to test this
-
-    const codeReader = new ZXing.BrowserQRCodeReader()
-    // img is path to image uploaded by telegram
-    codeReader.decodeFromImage(image).then((result) => {
-        console.log(result)
-    }).catch((err) => {
-        console.error(err)
-    })
-
+async function decodeQRFromUrl(url) { 
+    try { 
+        const response = await axios.get(url, { responseType: 'arraybuffer'})
+        const buffer = Buffer.from(response.data, "utf-8")
+        const img2 = await Jimp.read(buffer)
+        //  console.log(img2)
+        const value = await jsQR(img2.bitmap.data, img2.bitmap.width, img2.bitmap.height)
+        // console.log(value.data)
+        return value.data
+    } catch (error) { 
+        // console.log(error.code)
+        return "error"
+    }
 }
+
+
 
 
 module.exports = { 
@@ -153,5 +157,5 @@ module.exports = {
     payInvoice, 
     checkInvoice, 
     generateQR, 
-    scanQRcode
+    decodeQRFromUrl
 }
