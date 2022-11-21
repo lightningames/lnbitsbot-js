@@ -14,9 +14,8 @@ if (!token) {
   console.log("missing bot token")
   return
 }
+
 console.log("bot token:", token)
-
-
 const bot = new Telegraf(token)
 
 // scan QR
