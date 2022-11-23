@@ -2,12 +2,12 @@ const { Telegraf } = require('telegraf')
 const session = require('telegraf/session')
 const Stage = require('telegraf/stage')
 const Scene = require('telegraf/scenes/base')
-const { leave } = Stage
 const stage = new Stage()
-const axios = require('axios')
+const QRcode = require('qrcode')
+const fs = require('fs')
 require('dotenv').config()
 
-const { getWallet, createInvoice, decodeInvoice, generateQR, decodeQRFromUrl } = require('./lnbits_api')
+const { getWallet, createInvoice, decodeInvoice, decodeQRFromUrl } = require('./lnbits_api')
 
 const token = process.env.BOT_TOKEN || ""
 if (!token) {
@@ -74,7 +74,6 @@ bot.hears('/invoice', async ctx => {
   ctx.scene.enter('createinvoice')
 })
 
-
 ///////////////
 create_invoice.enter((ctx) => { 
   ctx.reply("How many sats for your invoice? ", 
@@ -92,27 +91,40 @@ function isNumeric(val) {
   return /^-?\d+$/.test(val);
 }
 
-
 create_invoice.on('text', async(ctx) => { 
-  let amt = ctx.message.text
-  console.log(amt)
-  if (isNumeric(amt) === false) { 
-    return ctx.reply("Please send a valid amount greater than 10")
-  }
-  if (ctx.message.text.length > 8)  {
-    return ctx.reply('Too big of an invoice, try a smaller amount?')
-  }
-  ctx.replyWithChatAction('typing')
+  try { 
+    let amt = ctx.message.text
+    console.log(amt)
+    if (isNumeric(amt) === false) { 
+      return ctx.reply("Please send a valid amount greater than 10")
+    }
+    if (ctx.message.text.length > 8)  {
+      return ctx.reply('Too big of an invoice, try a smaller amount?')
+    }
+    ctx.replyWithChatAction('typing')
 
-  const bolt11 = await createInvoice(amt)
-  console.log("generated bolt11 :", bolt11)
-  if (bolt11 === "Error") {
-    return ctx.reply("Error fetching data. Try again?")
+    const bolt11 = await createInvoice(amt)
+    console.log("generated bolt11 :", bolt11)
+    if (bolt11 === "Error") {
+      return ctx.reply("Error fetching data. Try again?")
+    }
+    const path = '/tmp/invoice.png'
+    await QRcode.toFile(path, bolt11, { 
+      errorCorrectionLevel: 'H'
+    })
+    await ctx.replyWithPhoto({ source:  path })
+    await ctx.reply('You can send another amount or tap "⬅️ Back"')
+
+    fs.unlink(path, function (err) {
+      if (err) throw err;
+      console.log("\nDeleted file: ", path);
+    });
+
+  } catch(error) { 
+    console.log(error)
+    await ctx.reply("Error generating Invoice.")
+    await ctx.reply('You can send another amount or tap "⬅️ Back"')
   }
-  const photodata = await generateQR(bolt11) 
-  console.log("photo path: " , photodata)
-  await ctx.replyWithPhoto({ source:  photodata})
-  await ctx.reply('You can send another amount or tap "⬅️ Back"')  
 })
 
 ////////////
@@ -160,14 +172,22 @@ generate.on('text', async (ctx) => {
     }
     ctx.replyWithChatAction('upload_photo')
     try { 
-      console.log("message from user: ", ctx.message.text)
-      const path = await generateQR(ctx.message.text)
-      console.log(path)
+      const path = '/tmp/qr_image.png'
+      await QRcode.toFile(path, ctx.message.text, { 
+         errorCorrectionLevel: 'H'
+      })
       await ctx.replyWithPhoto({source: path })
-      await ctx.reply('You can send me more text or tap "⬅️ Back"')  
+      await ctx.reply('You can send me more text or tap "⬅️ Back"')
+
+      fs.unlink(path, function (err) {
+        if (err) throw err;
+        console.log("\nDeleted file: ", path);
+      });
+  
     } catch (err) { 
       console.log(err)
-      ctx.reply("Error trying to generate QRCode.")
+      await ctx.reply("Error trying to generate QRCode.")
+      await ctx.reply('You can send me more text or tap "⬅️ Back"')
     }
   })
 
