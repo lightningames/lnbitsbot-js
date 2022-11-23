@@ -43,12 +43,11 @@ async function createInvoice(amount) {
         let payload = { 
             "out": false,
             "amount": amount, 
-             "memo": '', 
-             "webhook": '', 
-             "unit": ""}
+            "memo": '', 
+            "webhook": '', 
+            "unit": ""}
 
-        let response = await axios(
-            { 
+        let response = await axios({ 
             method: 'post',
             url: base_url + "payments",
             data: payload,
@@ -105,13 +104,49 @@ async function decodeInvoice(invoice) {
 
 
 async function checkInvoice(payment_hash) { 
-    //todo
+    let msg = ''
+    try { 
+        let response = await axios.get(base_url + "payments/" + payment_hash, { headers: invoice_headers})
+        if (response.status == 200) { 
+            console.log(response.data)
+           // msg += response.data
+            return response.data
+        }
+    } catch (err) { 
+        console.log(err.response.status)
+        console.log(err.response.data)
+        msg = "Error fetching data. Try again later."
+        return msg
+    }
 }
 
 // NOTE: this enables anyone who visits the bot to pay w/your account
 // so this is for demo purposes only. 
 async function payInvoice(invoice) { 
-    //todo.
+    let msg = ''
+    let payload = { 
+         "out": true, 
+         "bolt11": invoice }
+    let full_header = Object.assign(invoice_headers, json_content)
+
+    try { 
+        let response = await axios({ 
+            method: 'post',
+            url: base_url + "payments",
+            data: payload,
+            headers: full_header
+        })
+        if (response.status == 200) { 
+            console.log(response.data)
+            msg += response.data
+            return msg
+        }
+    } catch (err) { 
+        console.log(err.response.status)
+        console.log(err.response.data)
+        msg = "Error fetching data. Try again later."
+        return msg
+    }
 }
 
 const generateQR = async text => {

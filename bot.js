@@ -7,7 +7,7 @@ const QRcode = require('qrcode')
 const fs = require('fs')
 require('dotenv').config()
 
-const { getWallet, createInvoice, decodeInvoice, decodeQRFromUrl } = require('./lnbits_api')
+const { getWallet, createInvoice, decodeInvoice, decodeQRFromUrl, payInvoice, checkInvoice } = require('./lnbits_api')
 
 const token = process.env.BOT_TOKEN || ""
 if (!token) {
@@ -37,6 +37,10 @@ stage.register(create_invoice)
 // pay an invoice (include scanning QR image)
 const pay_invoice = new Scene('payinvoice')
 stage.register(pay_invoice)
+
+// check invoice
+const check_invoice = new Scene('checkinv')
+stage.register(check_invoice)
 
 
 /////////////////
@@ -74,6 +78,40 @@ bot.hears('/invoice', async ctx => {
   ctx.scene.enter('createinvoice')
 })
 
+bot.hears('✅ Check an Invoice', async ctx => { 
+  ctx.scene.enter('checkinv')
+})
+
+
+///////////////
+
+check_invoice.enter((ctx) => { 
+  ctx.reply("Enter a payment hash to check: ", 
+  { reply_markup: { keyboard: [['⬅️ Back']], resize_keyboard: true }})
+})
+
+check_invoice.leave((ctx) => starter(ctx))
+
+// this 'back' must preceed 'text' method or it will not execute
+check_invoice.hears('⬅️ Back', (ctx) => {
+  ctx.scene.leave('checkinv')
+  starter(ctx)
+})
+
+check_invoice.on('text', async(ctx) => { 
+  try { 
+    let hash = ctx.message.text
+    let response = await checkInvoice(hash)
+    //console.log('check invoice: ', response)
+    await ctx.reply(response)
+    await ctx.reply('You can send another amount or tap "⬅️ Back"')
+  } catch (error) { 
+    console.log(error)
+    await ctx.reply("Error fetching data. Try again?")
+    await ctx.reply('You can send another amount or tap "⬅️ Back"')
+  }
+})
+
 ///////////////
 create_invoice.enter((ctx) => { 
   ctx.reply("How many sats for your invoice? ", 
@@ -104,15 +142,20 @@ create_invoice.on('text', async(ctx) => {
     ctx.replyWithChatAction('typing')
 
     const bolt11 = await createInvoice(amt)
-    console.log("generated bolt11 :", bolt11)
+    //console.log("generated bolt11 :", bolt11)
     if (bolt11 === "Error") {
       return ctx.reply("Error fetching data. Try again?")
     }
     const path = '/tmp/invoice.png'
     await QRcode.toFile(path, bolt11, { 
-      errorCorrectionLevel: 'H'
+      errorCorrectionLevel: 'H',
+      margin: 5, 
+      color: { 
+        dark:"#010599FF",
+        light:"#FFFFFFFF"
+      }
     })
-    await ctx.replyWithPhoto({ source:  path })
+    await ctx.replyWithPhoto({ source:  path}, { caption: bolt11 })
     await ctx.reply('You can send another amount or tap "⬅️ Back"')
 
     fs.unlink(path, function (err) {
@@ -235,8 +278,9 @@ function starter (ctx) {
     'Hi! What do you want to do?', 
     { reply_markup: { keyboard: [['Get Balance'], 
     ['📨 Pay Invoice', '⚡️ Create Invoice'],
-//    ['👓 Decode Invoice', '✅ Check an Invoice'],
-    ['🔍 Scan QR Code', '🖊 Generate QR Code']],
+    ['👓 Decode Invoice', '✅ Check an Invoice'],
+   // ['🔍 Scan QR Code', '🖊 Generate QR Code']
+   ],
      resize_keyboard: true } }
   )
 }
@@ -245,6 +289,7 @@ bot.on('message', async (ctx) => {
   ctx.scene.leave('decode')
   ctx.scene.leave('generate')
   ctx.scene.leave('createinvoice')
+  ctx.scene.leave('checkinv')
   starter(ctx)
 })
 
