@@ -104,7 +104,7 @@ pay_invoice.on('text', async(ctx) => {
   try { 
     const invoice = ctx.message.text
     console.log("received content for invoice payment: ", invoice)
-
+    await ctx.reply("content received: "+ invoice)
   } catch (error) { 
     console.log(error)
     await ctx.reply("Error fetching data. Try again?")
@@ -119,7 +119,7 @@ pay_invoice.on('photo', async (ctx) => {
     const path = `https://api.telegram.org/file/bot${token}/${imageData.file_path}`
 
     console.log("uploaded image for invoice payment: ", path)
-
+    await ctx.reply("uploaded image path: " + path)
   } catch (error) { 
     console.log(error)
     await ctx.reply("Error fetching data. Try again?")
