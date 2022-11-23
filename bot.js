@@ -82,9 +82,53 @@ bot.hears('✅ Check an Invoice', async ctx => {
   ctx.scene.enter('checkinv')
 })
 
+bot.hears('📨 Pay Invoice', async ctx => { 
+  ctx.scene.enter('payinvoice')
+})
 
 ///////////////
+pay_invoice.enter((ctx) => { 
+  ctx.reply("Upload a QR or paste an invoice here ", 
+  { reply_markup: { keyboard: [['⬅️ Back']], resize_keyboard: true }})
+})
 
+pay_invoice.leave((ctx) => starter(ctx))
+
+// this 'back' must preceed 'text' method or it will not execute
+pay_invoice.hears('⬅️ Back', (ctx) => {
+  ctx.scene.leave('payinvoice')
+  starter(ctx)
+})
+
+pay_invoice.on('text', async(ctx) => { 
+  try { 
+    const invoice = ctx.message.text
+    console.log("received content for invoice payment: ", invoice)
+
+  } catch (error) { 
+    console.log(error)
+    await ctx.reply("Error fetching data. Try again?")
+    await ctx.reply('You can send another amount or tap "⬅️ Back"')
+  }
+})
+
+pay_invoice.on('photo', async (ctx) => {
+  ctx.replyWithChatAction('typing')
+  try {
+    const imageData = await bot.telegram.getFile(ctx.message.photo[ctx.message.photo.length - 1].file_id)
+    const path = `https://api.telegram.org/file/bot${token}/${imageData.file_path}`
+
+    console.log("uploaded image for invoice payment: ", path)
+
+  } catch (error) { 
+    console.log(error)
+    await ctx.reply("Error fetching data. Try again?")
+    await ctx.reply('You can send another amount or tap "⬅️ Back"')
+  }
+})
+
+
+///////////////
 check_invoice.enter((ctx) => { 
   ctx.reply("Enter a payment hash to check: ", 
   { reply_markup: { keyboard: [['⬅️ Back']], resize_keyboard: true }})
