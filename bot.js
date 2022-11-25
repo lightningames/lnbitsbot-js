@@ -55,7 +55,7 @@ bot.start((ctx) => {
 
 bot.hears('Get Balance', async ctx => { 
   const msg = await getWallet()
-  return ctx.reply(msg)
+  return ctx.replyWithMarkdown(msg)
 })
 
 bot.hears('👓 Decode Invoice', async ctx => { 
@@ -100,11 +100,27 @@ pay_invoice.hears('⬅️ Back', (ctx) => {
   starter(ctx)
 })
 
+function isString(e) {
+  return typeof e === "string" || e instanceof String;
+}
+
 pay_invoice.on('text', async(ctx) => { 
   try { 
-    const invoice = ctx.message.text
-    console.log("received content for invoice payment: ", invoice)
-    await ctx.reply("content received: "+ invoice)
+    ctx.replyWithChatAction('typing')
+    let invoice = ctx.message.text
+
+    // check payment hash before trying to pay invoice, add your extra checks here. 
+    const msg = await decodeInvoice(invoice)
+    if (isString(msg)) {
+      return ctx.reply(msg)
+    } 
+    let hash = msg.payment_hash
+    await ctx.reply("Payment Hash: " + hash)
+
+    let result = await payInvoice(invoice)
+    console.log(result)
+    await ctx.reply("Payment response: " + result)  
+
   } catch (error) { 
     console.log(error)
     await ctx.reply("Error fetching data. Try again?")
@@ -119,7 +135,30 @@ pay_invoice.on('photo', async (ctx) => {
     const path = `https://api.telegram.org/file/bot${token}/${imageData.file_path}`
 
     console.log("uploaded image for invoice payment: ", path)
-    await ctx.reply("uploaded image path: " + path)
+    //await ctx.reply("uploaded image path: " + path)
+
+    let invoice = await decodeQRFromUrl(path)
+    console.log("result: " , invoice)
+
+    if (invoice === "error"){ 
+      return await ctx.reply('No QR Code data found on this picture.')
+    } else { 
+      await ctx.reply('Scanned data:')
+      await ctx.reply(invoice)
+    }
+
+    // check payment hash before trying to pay invoice, add your extra checks here. 
+    const msg = await decodeInvoice(invoice)
+    if (isString(msg)) {
+      return ctx.reply(msg)
+    } 
+    let hash = msg.payment_hash
+    await ctx.reply("Payment Hash: " + hash)
+
+    let payresult = await payInvoice(invoice)
+    console.log(payresult)
+    await ctx.reply("Payment response: " + payresult)  
+
   } catch (error) { 
     console.log(error)
     await ctx.reply("Error fetching data. Try again?")
@@ -334,6 +373,7 @@ bot.on('message', async (ctx) => {
   ctx.scene.leave('generate')
   ctx.scene.leave('createinvoice')
   ctx.scene.leave('checkinv')
+  ctx.scene.leave('payinvoice')
   starter(ctx)
 })
 

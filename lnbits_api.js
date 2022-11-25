@@ -21,8 +21,8 @@ async function getWallet() {
         let response = await axios.get(base_url + "wallet", { headers: invoice_headers})
         if (response.status == 200) { 
             console.log(response.data)
-            msg = "Sats Balance: " + response.data.balance + "\n\n"
-            msg += "Wallet Name: " + response.data.name
+            msg = "*Your Balance:* " + response.data.balance/1000 + " sats \n\n"
+            msg += "*Wallet Name:* " + response.data.name
             return msg
         }
     } catch (err) { 
@@ -42,7 +42,7 @@ async function createInvoice(amount) {
     try { 
         let payload = { 
             "out": false,
-            "amount": amount, 
+            "amount": amount*100, 
             "memo": '', 
             "webhook": '', 
             "unit": ""}
@@ -92,6 +92,8 @@ async function decodeInvoice(invoice) {
             console.log("inside response 200")
             console.log(response.data)
             return response.data
+        } else { 
+            return response.message
         }
     } catch (err) { 
        // console.log(err)
@@ -127,7 +129,7 @@ async function payInvoice(invoice) {
     let payload = { 
          "out": true, 
          "bolt11": invoice }
-    let full_header = Object.assign(invoice_headers, json_content)
+    let full_header = Object.assign(admin_headers, json_content)
 
     try { 
         let response = await axios({ 
