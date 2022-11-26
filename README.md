@@ -45,6 +45,7 @@ Edit the fly.toml
 
 Note: Don't enter secret environment variables here. Fly.io offers secrets (via the fly secrets command) that are exposed as environment variables in your runtime. Example: you can run fly secrets set BOT_TOKEN=<bot_token_here>.
 
+See the .env.example for other variables that need to be set as secrets.
 
 Then deploy changes to your app, by running:
 
