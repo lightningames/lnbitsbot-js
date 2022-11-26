@@ -185,7 +185,6 @@ check_invoice.on('text', async(ctx) => {
   try { 
     let hash = ctx.message.text
     let response = await checkInvoice(hash)
-    //console.log('check invoice: ', response)
     await ctx.reply(response)
     await ctx.reply('You can send another amount or tap "⬅️ Back"')
   } catch (error) { 
@@ -335,7 +334,6 @@ scanQR.on('photo', async (ctx) => {
     const result = await decodeQRFromUrl(path)
     console.log("result: " , result)
     if (result === "error"){ 
-      //console.log("error statement")
       await ctx.reply('No QR Code data found on this picture.')
     } else { 
       await ctx.reply('Scanned data:')
@@ -343,9 +341,7 @@ scanQR.on('photo', async (ctx) => {
       ctx.reply('You can send me other pictures or tap "⬅️ Back"')  
     }
   } catch (err) { 
-    //console.log( "catch: error statement")
     ctx.reply('No QR Code data found on this picture.')
-    // sendError()
   }
 })
 
@@ -375,15 +371,6 @@ bot.on('message', async (ctx) => {
   ctx.scene.leave('checkinv')
   ctx.scene.leave('payinvoice')
   starter(ctx)
-})
-
-
-function sendError (err, ctx) {
-  if (err.toString().includes('message is not modified')) {
-    return
-  }
-//  bot.telegram.sendMessage(data.dev, `Ошибка у [${ctx.from.first_name}](tg://user?id=${ctx.from.id}) \n\nОшибка: ${err}`, { parse_mode: 'markdown' })
-}
-  
+})  
 
 bot.launch()

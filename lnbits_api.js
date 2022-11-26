@@ -53,7 +53,6 @@ async function createInvoice(amount) {
             data: payload,
             headers: full_header
         })
-        //console.log(response)
         if (response.status == 201) {  // status created
             //console.log(response.data) 
             // response.data contains payment_hash, payment_request, checking_id, lnurl_response
@@ -61,9 +60,7 @@ async function createInvoice(amount) {
             return response.data.payment_request
         }
     } catch (err) { 
-       // console.log(err)
         console.log(err.response.status)
-        //console.log(err.response.data)
         msg = "Error"
         return msg
     }
@@ -87,7 +84,6 @@ async function decodeInvoice(invoice) {
             data: payload,
             headers: full_header
         })
-            //console.log(response)
         if (response.status == 200) {
             console.log("inside response 200")
             console.log(response.data)
@@ -96,7 +92,6 @@ async function decodeInvoice(invoice) {
             return response.message
         }
     } catch (err) { 
-       // console.log(err)
         console.log(err.response.status)
         console.log(err.response.data)
         msg = "Error fetching data. Try again later."
@@ -110,13 +105,12 @@ async function checkInvoice(payment_hash) {
     try { 
         let response = await axios.get(base_url + "payments/" + payment_hash, { headers: invoice_headers})
         if (response.status == 200) { 
-            console.log(response.data)
-           // msg += response.data
+            //console.log(response.data)
             return response.data
         }
     } catch (err) { 
-        console.log(err.response.status)
-        console.log(err.response.data)
+        //console.log(err.response.status)
+        //console.log(err.response.data)
         msg = "Error fetching data. Try again later."
         return msg
     }
@@ -170,12 +164,9 @@ async function decodeQRFromUrl(url) {
         const response = await axios.get(url, { responseType: 'arraybuffer'})
         const buffer = Buffer.from(response.data, "utf-8")
         const img2 = await Jimp.read(buffer)
-        //  console.log(img2)
         const value = await jsQR(img2.bitmap.data, img2.bitmap.width, img2.bitmap.height)
-        // console.log(value.data)
         return value.data
     } catch (error) { 
-        // console.log(error.code)
         return "error"
     }
 }
