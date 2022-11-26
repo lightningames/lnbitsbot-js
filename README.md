@@ -13,12 +13,15 @@ The template contains basic functions to:
 - Decode Invoice
 - Pay Invoice 
 
-
+![Telegram Bot](./images/demo_bot.png)
 
 ## How to setup your bot:
 
 - Step 1. Get a [botfather](https://t.me/botfather) token for your bot
-- Step 2. Get your Admin key and Invoice/read key from [LNBits wallet page](./images/lnbits_demo.png)
+- Step 2. Get your Admin key and Invoice/read key from LNBits Wallet Page. 
+
+    ![LNBits wallet page](./images/lnbits_demo.png)
+    
 - Step 3. Copy `.env.example` to `.env`. Add your values from Step 1 and 2 to `.env`
 
 - Step 4. Run your bot and check that it works.
