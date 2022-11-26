@@ -16,6 +16,8 @@ $ yarn
 $ yarn start
 ```
 
+CAVEAT: This is a demo and proof of concept bot, if the bot is deployed there is a balance, anyone who accesses your bot will be able to spend the balance by the 'pay invoice' button.
+
 ## Deploy your bot to fly.io as a Node App
 
 First, sign up for an account at [Fly.io](https://fly.io/) (no credit card required).
