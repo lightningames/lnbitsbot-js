@@ -7,7 +7,7 @@ const QRcode = require('qrcode')
 const fs = require('fs')
 require('dotenv').config()
 
-const { getWallet, createInvoice, decodeInvoice, decodeQRFromUrl, payInvoice, checkInvoice } = require('./lnbits_api')
+const { getWalletInfo, getBalance, createInvoice, decodeInvoice, decodeQRFromUrl, payInvoice, checkInvoice } = require('./lnbits_api')
 
 const token = process.env.BOT_TOKEN || ""
 if (!token) {
@@ -54,7 +54,7 @@ bot.start((ctx) => {
 })
 
 bot.hears('Get Balance', async ctx => { 
-  const msg = await getWallet()
+  const msg = await getWalletInfo()
   return ctx.replyWithMarkdown(msg)
 })
 
@@ -117,9 +117,19 @@ pay_invoice.on('text', async(ctx) => {
     let hash = msg.payment_hash
     await ctx.reply("Payment Hash: " + hash)
 
-    let result = await payInvoice(invoice)
-    console.log(result)
-    await ctx.reply("Payment response: " + result)  
+    let amt_paid = msg.amount_msat/1000
+
+    let payresult = await payInvoice(invoice)
+    console.log(payresult)
+    if (payresult === undefined) {
+        let reply = "⚡️ Payment made. " + amt_paid + " sats \n"
+        let currBal = await getBalance();
+        reply += "Current Balance: " + currBal + "\n"
+        console.log(reply)
+        return ctx.reply(reply)
+    } else { 
+      await ctx.reply("Payment response: " + payresult)
+    }
 
   } catch (error) { 
     console.log(error)
@@ -155,9 +165,20 @@ pay_invoice.on('photo', async (ctx) => {
     let hash = msg.payment_hash
     await ctx.reply("Payment Hash: " + hash)
 
+    let amt_paid = msg.amount_msat/1000
+
     let payresult = await payInvoice(invoice)
     console.log(payresult)
-    await ctx.reply("Payment response: " + payresult)  
+    
+    if (payresult === undefined) {
+        let reply = "⚡️ Payment made. " + amt_paid + " sats \n"
+        let currBal = await getBalance();
+        reply += "Current Balance: " + currBal + "\n"
+        console.log(reply)
+        return ctx.reply(reply)
+    } else { 
+      await ctx.reply("Payment response: " + payresult)
+    }
 
   } catch (error) { 
     console.log(error)

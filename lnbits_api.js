@@ -15,7 +15,7 @@ const base_url = url + "/api/v1/"
 console.log("BASE URL", base_url)
 
 
-async function getWallet() { 
+async function getWalletInfo() { 
     let msg = ''
     try { 
         let response = await axios.get(base_url + "wallet", { headers: invoice_headers})
@@ -32,6 +32,24 @@ async function getWallet() {
         return msg
     }
 }
+
+async function getBalance() { 
+    let msg = ''
+    try { 
+        let response = await axios.get(base_url + "wallet", { headers: invoice_headers})
+        if (response.status == 200) { 
+            console.log(response.data)
+            msg = response.data.balance/1000
+            return msg
+        }
+    } catch (err) { 
+        console.log(err.response.status)
+        console.log(err.response.data)
+        msg = "error"
+        return msg
+    }
+}
+
 
 async function createInvoice(amount) { 
     let msg = ''
@@ -173,7 +191,8 @@ async function decodeQRFromUrl(url) {
 
 
 module.exports = { 
-    getWallet,
+    getWalletInfo,
+    getBalance,
     createInvoice, 
     decodeInvoice,
     payInvoice, 
