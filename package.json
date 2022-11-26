@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bitkarrot/lnbitsbot-js.git"
+    "url": "git+https://github.com/lightningames/lnbitsbot-js.git"
   },
   "keywords": [],
   "author": "bitkarrot",
