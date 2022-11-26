@@ -5,11 +5,11 @@ Written in Node.js
 
 ## How to setup your bot:
 
-Step 1. Get a botfather token for your bot
-Step 2. Get your Admin key and Invoice/read key from LNBits wallet page
-Step 3. Copy `.env.example` to `.env`. Add your values from Step 1 and 2 to `.env`
+- Step 1. Get a botfather token for your bot
+- Step 2. Get your Admin key and Invoice/read key from LNBits wallet page
+- Step 3. Copy `.env.example` to `.env`. Add your values from Step 1 and 2 to `.env`
 
-Step 4. Run your bot and check that it works.
+- Step 4. Run your bot and check that it works.
 
 ```
 $ yarn
