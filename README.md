@@ -3,10 +3,22 @@ This is a Basic Template Telegram Bot For LNBits written in Common js. It will a
 
 Written in Node.js
 
+## What does it do? 
+
+The template contains basic functions to: 
+
+- Get Balance
+- Create Invoice
+- Check Invoice
+- Decode Invoice
+- Pay Invoice 
+
+
+
 ## How to setup your bot:
 
 - Step 1. Get a [botfather](https://t.me/botfather) token for your bot
-- Step 2. Get your Admin key and Invoice/read key from [LNBits wallet page](./lnbits_demo.png)
+- Step 2. Get your Admin key and Invoice/read key from [LNBits wallet page](./images/lnbits_demo.png)
 - Step 3. Copy `.env.example` to `.env`. Add your values from Step 1 and 2 to `.env`
 
 - Step 4. Run your bot and check that it works.
