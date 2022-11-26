@@ -164,7 +164,8 @@ async function payInvoice(invoice) {
 }
 
 const generateQR = async text => {
-    // NOTE: sending as form data as data url in a stream does not seem to work with TG api
+    // NOTE: sending as form data as data url in a stream does not seem to work with TG api as of this writing. 
+    // If any known solutions, please feel free to make a pull request.
     try {
         const path = '/tmp/qr.png' // make this dynamic
         await QRcode.toFile(path, text, { 
