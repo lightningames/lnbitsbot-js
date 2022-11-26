@@ -1,5 +1,5 @@
 # lnbitsbot-js
-This is a Basic Template Telegram Bot For LNBits written in common js that will allow you to access your LNBits wallet and create and process invoices. This template only supplies the methods for the basic wallet, however it can be extended to use other extensions. 
+This is a Basic Template Telegram Bot For LNBits written in Common js. It will allow you to access your LNBits wallet and create and process invoices. This template only supplies the methods for the basic wallet, however it can be extended to use other extensions. Checks and balances are minimal, and developers who use this template should implement their own.
 
 Written in Node.js
 
