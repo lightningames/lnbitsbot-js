@@ -60,7 +60,17 @@ Edit the fly.toml
     LNBITS_URL='https://your.lnbits.here.com'
 ```
 
-NOTE: Don't enter secret environment variables here (admin and invoice key). Fly.io offers secrets (via the fly secrets command) that are exposed as environment variables in your runtime. Example: you can run fly secrets set BOT_TOKEN=<bot_token_here>.
+NOTE: Don't enter secret environment variables here (admin and invoice key). Fly.io offers secrets (via the fly secrets command) that are exposed as environment variables in your runtime. Example: you can run 
+
+```
+
+$ fly secrets set BOT_TOKEN=<bot_token_here>.
+$ fly secrets set ADMIN_KEY=<admin key here>
+$ fly secrets set INVOICE_KEY=<invoice key here>
+
+```
+
+Also see: https://fly.io/docs/reference/secrets/#setting-secrets
 
 See the .env.example for other variables that need to be set as secrets.
 
